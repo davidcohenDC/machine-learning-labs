@@ -1,0 +1,766 @@
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.1 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.15000000000000002 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.20000000000000004 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.25000000000000006 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.30000000000000004 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.3500000000000001 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.40000000000000013 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.45000000000000007 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5000000000000001 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.5500000000000002 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6000000000000002 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.6500000000000001 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7000000000000002 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.7500000000000002 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8000000000000002 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.8500000000000002 and folds = 9
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 1
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 2
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 3
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 4
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 5
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 6
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 7
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 8
+fit completed
+fit completed
+fit completed
+fit completed
+data_test_size= 0.9000000000000002 and folds = 9
+fit completed
+fit completed
