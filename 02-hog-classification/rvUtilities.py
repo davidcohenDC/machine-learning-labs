@@ -133,3 +133,42 @@ def getTrainData(image_side):
                                            pixels_per_cell=(8, 8), cells_per_block=(1, 1),
                                            cache=memory)
   return train_feature_x, train_y
+
+def getTestData(image_side):
+  db_path = 'DBs/CaniGatti_ML18'
+  test_filelist = 'Unlabeled_BinaryTestSet.txt' 
+  memory = Memory('Experiments', verbose=0) 
+
+  test_raw_x = ml_utilities.load_unlabeled_dataset(test_filelist, db_path, cache=memory)
+
+  test_raw_x = ml_utilities.resize_images(test_raw_x, image_side, image_side, cache=memory)
+
+  test_feature_x = ml_utilities.extract_hog(test_raw_x, 
+                                           convert_to_gray=True, orientations=9,
+                                           pixels_per_cell=(8, 8), cells_per_block=(1, 1),
+                                           cache=memory)
+  return test_feature_x
+
+
+def trainAndGetOptimalClassifier(X, y):
+  bclf = SVC()
+  clf0 = LogisticRegression(solver='lbfgs', max_iter=1000)
+  clf1 = SVC(kernel='rbf', probability=True)
+  clf2 = RandomForestClassifier(random_state=1)
+  clf3 = AdaBoostClassifier(n_estimators=100)
+  eclf = VotingClassifier(estimators=[('lr', clf0), ('svc', clf1), ('rf', clf2), ('adaboost', clf3)],
+                          voting='soft', weights=[1, 1, 1, 1])
+
+  print("=== Soft voting classifier (probabilities) ===")
+  print("BaggingClassifier: ", clf0.fit(X, y).score(X, y))
+  print("SVC: ", clf1.fit(X, y).score(X, y))
+  print("RandomForestClassifier: ", clf2.fit(X, y).score(X, y))
+  print("AdaBoostClassifier: ", clf3.fit(X, y).score(X, y))
+  print("Ensambled classifier score: ", eclf.fit(X, y).score(X, y))
+
+  params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
+
+  grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5, verbose=2)
+  grid = grid.fit(X, y)
+  print("GridSearchCV:", grid.score(X, y))
+  return grid
