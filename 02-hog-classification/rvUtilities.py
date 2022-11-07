@@ -134,6 +134,23 @@ def getTrainData(image_side):
                                            cache=memory)
   return train_feature_x, train_y
 
+
+def getTrainData12500(image_side):
+  db_path = 'DBs/dogs-vs-cats/'
+  train_filelist = 'train2.txt'  
+  memory = Memory('Experiments', verbose=0) 
+
+  train_raw_x, train_y = ml_utilities.load_labeled_dataset(train_filelist, db_path, cache=memory)
+
+  train_raw_x = ml_utilities.resize_images(train_raw_x, image_side, image_side, cache=memory)
+
+  train_feature_x = ml_utilities.extract_hog(train_raw_x, 
+                                           convert_to_gray=True, orientations=9,
+                                           pixels_per_cell=(8, 8), cells_per_block=(1, 1),
+                                           cache=memory)
+  return train_feature_x, train_y
+
+
 def getTestData(image_side):
   db_path = 'DBs/CaniGatti_ML18'
   test_filelist = 'Unlabeled_BinaryTestSet.txt' 
