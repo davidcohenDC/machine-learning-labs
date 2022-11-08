@@ -12,7 +12,59 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import VotingClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score, GridSearchCV, StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
+import pandas as pd
+import numpy
+import sklearn.metrics
+
+def getTestLabels():
+    test_path = 'DBs/CaniGatti_ML18/Unlabeled_BinaryTestSet.txt'
+
+    test_df = pd.read_table(test_path, delimiter="/", names=["path1","path2","filename"])
+    preds = list()
+    i = 0
+    while i < len(test_df):
+        pred = 0 if test_df["filename"][i][0:3]=='cat' else 1
+        preds.append(pred)
+        i = i + 1
+    test_labels = list()
+    for file in test_df["filename"]:
+          label = 0 if file[0:3]=='cat' else 1
+          test_labels.append(label)
+    return test_labels
+
+def printAccuracy(y_true, y_pred):
+  acc = sklearn.metrics.accuracy_score(y_true, y_pred)
+  print(acc)
+
+
+def useGridSearchToCalculateBestHyperparams(model_params, train_feature_x, train_y, test_size, n_split):
+    result = None
+    for data_test_size in test_size: #0.2,0.25,0.3
+        for split in n_split: #, 2, 3, 4, 5, 6, 7, 8, 9, 10
+            cross_val = StratifiedShuffleSplit(n_splits=split, test_size=data_test_size, random_state=42)
+
+            for model_name, mp in model_params.items():
+                grid = GridSearchCV(estimator=mp['model'],
+                                    param_grid=mp['params'],
+                                    cv=cross_val,
+                                    verbose=2,
+                                    return_train_score=False)
+
+
+                grid.fit(train_feature_x, train_y)
+
+                print("Iteration score: ")
+                print(grid.best_score_)
+                if result == None or result.best_score_ < grid.best_score_:
+                    print("Best score replaced: ")
+                    result = grid
+                    print(result.best_score_)
+    
+    return result
+
+
 
 def useVotingClassifierWithGridSearchCV(X, y):
   clf1 = LogisticRegression(random_state=1)
