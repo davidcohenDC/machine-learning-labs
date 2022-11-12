@@ -115,17 +115,20 @@ def hand_cleaning(df, join_colum, bad_path="", debug=True):
         row_removed = row_removed + bad_data.shape[0]
     d_print(debug, f"{row_removed} total row row removed")
 
-    clean_df = clean_df[(df["hour"] == 21) & (clean_df["P (kW)"] < 80) | (clean_df["hour"] != 21)]
-    clean_df = clean_df[(df["hour"] == 20) & (clean_df["P (kW)"] < 100) | (clean_df["hour"] != 20)]
-    clean_df = clean_df[(df["hour"] == 19) & (clean_df["P (kW)"] < 220) | (clean_df["hour"] != 19)]
-    clean_df = clean_df[(df["hour"] == 18) & (clean_df["P (kW)"] < 400) | (clean_df["hour"] != 18)]
-    clean_df = clean_df[(df["hour"] == 17) & (clean_df["P (kW)"] < 400) | (clean_df["hour"] != 17)]
-    clean_df = clean_df[(df["hour"] == 6) & (clean_df["P (kW)"] < 700) | (clean_df["hour"] != 6)]
-    clean_df = clean_df[(df["hour"] == 5) & (clean_df["P (kW)"] < 500) | (clean_df["hour"] != 5)]
-    clean_df = clean_df[(df["hour"] == 4) & (clean_df["P (kW)"] < 100) | (clean_df["hour"] != 4)]
-    clean_df = clean_df[(df["hour"] == 3) & (clean_df["P (kW)"] < 80) | (clean_df["hour"] != 3)]
-    clean_df = clean_df[(df["hour"] == 4) & (clean_df["I3 (W/m2)"] < 200) | (clean_df["hour"] != 4)]
-    # TODO add or remove more
+    drop_df = clean_df[((clean_df["hour"] == 21) & (clean_df["P (kW)"] > 80) |
+                       (clean_df["hour"] == 20) & (clean_df["P (kW)"] > 100) |
+                        (clean_df["hour"] == 19) & (clean_df["P (kW)"] < 220) |
+                       (clean_df["hour"] == 18) & (clean_df["P (kW)"] < 400) |
+                       (clean_df["hour"] == 17) & (clean_df["P (kW)"] < 400) |
+                        (clean_df["hour"] == 6) & (clean_df["P (kW)"] < 700) |
+                        (clean_df["hour"] == 5) & (clean_df["P (kW)"] < 500) |
+                        (clean_df["hour"] == 4) & (clean_df["P (kW)"] < 100) |
+                        (clean_df["hour"] == 3) & (clean_df["P (kW)"] < 80) |
+                        (clean_df["hour"] == 4) & (clean_df["I3 (W/m2)"] < 200))]
+
+    # TODO add or remove more (need to check mid hours)
+    clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, drop_df[join_colum])
+
     if debug:
         d_print(debug, "Before hand cleaning")
         df.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
