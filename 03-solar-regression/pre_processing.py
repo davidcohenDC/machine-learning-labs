@@ -4,6 +4,9 @@ import time
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from sklearn.model_selection import GridSearchCV, ShuffleSplit
+from sklearn.ensemble import RandomForestRegressor, VotingRegressor
+from sklearn.linear_model import LinearRegression
 
 
 class SolarData:
@@ -199,3 +202,120 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
     # TODO add standard o min_max_scaler
     d_print(debug, "END NORMALIZATION ...")
     return dataframe, pure_data
+
+
+class BestParams:
+    _regressor = None
+    _t_size = 0
+    _split = 0
+    type = None
+
+    def __init__(self, type):
+        self.type = type
+
+    def update(self, bestparams, t_size, split):
+        print("Best score replaced: ")
+        print("New: ", bestparams.best_score_)
+        if self._regressor != None:
+            print("Old: ", self._regressor.best_score_)
+        self._regressor = bestparams
+        self._t_size = t_size
+        self._split = split
+
+    def isbetter(self, score):
+        if self._regressor is None: return True
+        # print(score.cv_results_['mean_test_score'], self._bestparams['cv_results_'])
+        return score.cv_results_['mean_test_score'] > self._regressor.cv_results_['mean_test_score']
+
+    def printVals(self):
+        print("Regressor type: ", self.type)
+        print("_bestscore: ", self._regressor.best_score_)
+        print("_bestparams: ", self._regressor.best_params_)
+        print("_t_size: ", self._t_size)
+        print("_split: ", self._split)
+
+    def isBetterRegressor(self, newRegressor):
+        if self._regressor is None: return True
+        # print(score.cv_results_['mean_test_score'], self._bestparams['cv_results_'])
+        return newRegressor.best_score_ < self._regressor.best_score_
+
+
+def getOptimalRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3,4,5]):
+    bestparams = BestParams("Simple regressor")
+
+    result = None
+    for data_test_size in test_size:
+        for split in n_split:
+            cross_val = ShuffleSplit(n_splits=split, test_size=data_test_size, random_state=42)
+
+            for model_name, mp in model_params.items():
+                grid = GridSearchCV(estimator=mp['model'],
+                                    param_grid=mp['params'],
+                                    cv=cross_val,
+                                    verbose=2,
+                                    return_train_score=False)
+
+
+                grid.fit(train_x, train_y)
+
+                if bestparams.isbetter(grid):
+                    bestparams.update(grid,data_test_size,split)
+    
+    return bestparams
+
+
+def getVotingRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3,4,5]):
+    bestparams = BestParams("Voting Regressor")
+
+    votingRegressorModel = VotingRegressor([
+        ('rf', RandomForestRegressor()),
+        ('lr', LinearRegression(**model_params['LinearRegressor']['params']))
+    ])
+
+    params = {}
+    for param, value in model_params['RandomForestRegressor']['params'].items():
+        params['rf__' + param] = value
+
+    for param, value in model_params['LinearRegressor']['params'].items():
+        params['lr__' + param] = value
+
+
+    for data_test_size in test_size:
+        for split in n_split:
+            cross_val = ShuffleSplit(n_splits=split, test_size=data_test_size, random_state=42)
+
+            grid = GridSearchCV(estimator=votingRegressorModel,
+                                param_grid=params,
+                                cv=cross_val,
+                                verbose=2,
+                                return_train_score=False)
+
+
+            grid.fit(train_x, train_y)
+
+        if bestparams.isbetter(grid):
+            bestparams.update(grid,data_test_size,split)
+    
+    return bestparams
+
+def getBestRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3,4,5], useVotingRegressor=False):
+
+    # Use GridSearchCV with RandomForest and LinearRegressor
+    # Output -> il migliore regressore fra questi due
+    regressor = getOptimalRegressor(model_params, train_x, train_y, test_size, n_split)
+
+    # Use GridSearchCV with VotingRegressor.
+    votingRegressor = None
+    if useVotingRegressor:
+        votingRegressor = getVotingRegressor(model_params, train_x, train_y, test_size, n_split)
+
+    # Print results
+    regressor.printVals()
+    if votingRegressor is not None:
+        votingRegressor.printVals()
+
+    if regressor.isBetterRegressor(votingRegressor._regressor):
+        return regressor
+    else:
+        return votingRegressor
+ 
