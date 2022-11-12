@@ -17,6 +17,27 @@ def d_print(debug, st):
         print(st)
 
 
+def get_dataset_features(df, y=None, useless_column=None):
+    col_y = pd.DataFrame()
+    df_feature = df.copy()
+    if useless_column is None:
+        useless_column = []
+    if check_dataframe_column(df_feature, y):
+        col_y = df_feature.pop(y)
+    for col in useless_column:
+        if check_dataframe_column(df_feature, col):
+            df_feature = df_feature.drop(columns=col)
+    return df_feature.values, col_y.values
+
+
+def check_dataframe_column(df, col):
+    if col in df:
+        return True
+    else:
+        print("Column", col, "does not exist in the DataFrame.")
+        return False
+
+
 def filter_dataframe_rows_by_values(df, col, values):
     return df[~df[col].isin(values)]
 
@@ -24,21 +45,34 @@ def filter_dataframe_rows_by_values(df, col, values):
 # Work with 24h
 def day_part(hour):
     if hour in [4, 5]:
-        return "dawn"
+        return 1  # "dawn"
     elif hour in [6, 7]:
-        return "early morning"
+        return 2  # "early morning"
     elif hour in [8, 9, 10]:
-        return "late morning"
+        return 3  # "late morning"
     elif hour in [11, 12, 13]:
-        return "noon"
+        return 4  # "noon"
     elif hour in [14, 15, 16]:
-        return "afternoon"
+        return 5  # "afternoon"
     elif hour in [17, 18, 19]:
-        return "evening"
+        return 6  # "evening"
     elif hour in [20, 21, 22]:
-        return "night"
+        return 7  # "night"
     elif hour in [23, 24, 1, 2, 3]:
-        return "midnight"
+        return 8  # "midnight"
+
+
+def get_features(df, y=None, useless_column=None):
+    col_y = None
+    df_feature = df.copy()
+    if useless_column is None:
+        useless_column = []
+    if check_dataframe_column(df_feature, y):
+        col_y = df_feature.pop(y)
+        for col in useless_column:
+            if check_dataframe_column(df_feature, col):
+                df_feature = df_feature.drop(columns=col)
+    return df_feature, col_y
 
 
 # Work With a dataframe
@@ -50,13 +84,14 @@ def extract_datetime_feature(df, date_column, remove=True, is_timestamp=True):
     new_df["month"] = new_df[date_column].dt.month
     new_df["day"] = new_df[date_column].dt.day
     new_df["hour"] = new_df[date_column].dt.hour
-    new_df["day_of_week"] = new_df[date_column].dt.day_of_week
-    new_df["day_of_year"] = new_df[date_column].dt.day_of_year
+    new_df["minute"] = new_df[date_column].dt.minute
+    new_df["day_of_week"] = new_df[date_column].dt.day_of_week.astype(int)
+    new_df["day_of_year"] = new_df[date_column].dt.day_of_year.astype(int)
     new_df['day_part'] = new_df['hour'].apply(day_part)
-    new_df['is_year_start'] = new_df[date_column].dt.is_year_start
-    new_df['is_quarter_start'] = new_df[date_column].dt.is_quarter_start
-    new_df['is_month_start'] = new_df[date_column].dt.is_month_start
-    new_df['is_month_end'] = new_df[date_column].dt.is_month_end
+    new_df['is_year_start'] = new_df[date_column].dt.is_year_start.astype(int)
+    new_df['is_quarter_start'] = new_df[date_column].dt.is_quarter_start.astype(int)
+    new_df['is_month_start'] = new_df[date_column].dt.is_month_start.astype(int)
+    new_df['is_month_end'] = new_df[date_column].dt.is_month_end.astype(int)
     new_df['is_weekend'] = np.where(new_df['day_of_week'].isin([5, 6]), 1, 0)
     # df["season"] = df["Date"].dt
     if remove:
@@ -64,30 +99,54 @@ def extract_datetime_feature(df, date_column, remove=True, is_timestamp=True):
     return new_df
 
 
-def augment_temperature(df, replace=False, columns=None):
+def augment_cycle_variable(df, replace=False, columns=None):
+    new_df = df.copy()
+    if columns is None:
+        columns = []
+    for col in columns:
+        if check_dataframe_column(df, col):
+            new_col_sin = col + "__sin"
+            new_col_cos = col + "__cos"
+            values = set(new_df[col])
+            num_values = len(set(new_df[col]))
+            if 0 in values:
+                new_df[new_col_sin] = np.sin(new_df[col] * (2. * np.pi / num_values))
+                new_df[new_col_cos] = np.cos(new_df[col] * (2. * np.pi / num_values))
+            # shift by one
+            else:
+                new_df[new_col_sin] = np.sin((new_df[col] - 1) * (2. * np.pi / num_values))
+                new_df[new_col_cos] = np.cos((new_df[col] - 1) * (2. * np.pi / num_values))
+            if replace:
+                new_df = new_df.drop(columns=col)
+    return new_df
+
+
+def augment_celsius(df, replace=False, columns=None):
     new_df = df.copy()
     if columns is None:
         columns = []
 
     for col in columns:
-        new_col = col.replace("C", "F", 1)
-        new_df[new_col] = new_df.apply(lambda x: (9 / 5) * x[col] + 32, axis=1)
-        if replace:
-            new_df.drop(columns=col)
+        if check_dataframe_column(df, col):
+            new_col = col.replace("C", "F")
+            if replace:
+                new_df[col] = new_df.apply(lambda x: (9 / 5) * x[col] + 32, axis=1)
+            else:
+                new_df[new_col] = new_df.apply(lambda x: (9 / 5) * x[col] + 32, axis=1)
         return new_df
 
 
-def get_outliers_from_feature(df, feature_from, feature_to, feature_value, bound='mid'):
-    assert bound in ('mid', 'upper'), "Invalid side '{}'".format(bound)
+def get_outliers_from_feature(df, feature_from, feature_to, feature_value, threshold='mid'):
+    assert threshold in ('mid', 'upper'), "Invalid side '{}'".format(threshold)
     lower_bound = 0
     upper_bound = 0
     q1 = df[df[feature_from] == feature_value][feature_to].quantile(0.25)
     q3 = df[df[feature_from] == feature_value][feature_to].quantile(0.75)
     iqr = q3 - q1
-    if bound == 'mid':
+    if threshold == 'mid':
         lower_bound = q1 - 1.5 * iqr
         upper_bound = q3 + 1.5 * iqr
-    elif bound == "upper":
+    elif threshold == "upper":
         lower_bound = q1 - 3.0 * iqr
         upper_bound = q3 + 3.0 * iqr
     if lower_bound != 0 and upper_bound != 0:
@@ -116,10 +175,10 @@ def hand_cleaning(df, join_colum, bad_path="", debug=True):
     d_print(debug, f"{row_removed} total row row removed")
 
     drop_df = clean_df[((clean_df["hour"] == 21) & (clean_df["P (kW)"] > 80) |
-                       (clean_df["hour"] == 20) & (clean_df["P (kW)"] > 100) |
+                        (clean_df["hour"] == 20) & (clean_df["P (kW)"] > 100) |
                         (clean_df["hour"] == 19) & (clean_df["P (kW)"] > 220) |
-                       (clean_df["hour"] == 18) & (clean_df["P (kW)"] > 400) |
-                       (clean_df["hour"] == 17) & (clean_df["P (kW)"] > 400) |
+                        (clean_df["hour"] == 18) & (clean_df["P (kW)"] > 400) |
+                        (clean_df["hour"] == 17) & (clean_df["P (kW)"] > 400) |
                         (clean_df["hour"] == 6) & (clean_df["P (kW)"] > 700) |
                         (clean_df["hour"] == 5) & (clean_df["P (kW)"] > 500) |
                         (clean_df["hour"] == 4) & (clean_df["P (kW)"] > 100) |
@@ -167,8 +226,12 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
 
     # AUGMENTATION
     d_print(debug, "BEGIN AUGMENTATION ...")
-    dataframe = augment_temperature(df=dataframe, replace=False, columns=["Ta (C)", "Tm (C)"])
+    dataframe = augment_celsius(df=dataframe, replace=False, columns=["Ta (C)", "Tm (C)"])
     d_print(debug, "temperature augmented!")
+    dataframe = augment_cycle_variable(df=dataframe, replace=False, columns=["Time Frame", "month", "day",
+                                                                             "hour", "minute", "day_of_year",
+                                                                             "day_of_week"])
+    d_print(debug, "cycles augmented!")
     dataframe = dataframe.replace(2013, 2012)
     d_print(debug, "year fused!")
     d_print(debug, "END AUGMENTATION")
@@ -177,7 +240,7 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
     # Remove outliers
     for val in set(dataframe["hour"]):
         outliers = get_outliers_from_feature(df=pure_data, feature_from="hour", feature_to="P (kW)",
-                                             feature_value=val, bound="mid")
+                                             feature_value=val, threshold="mid")
         if not outliers.empty:
             pure_data = filter_dataframe_rows_by_values(df=pure_data, col="Date", values=outliers["Date"])
     d_print(debug, "removed outliers ...")
