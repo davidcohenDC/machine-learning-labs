@@ -159,9 +159,10 @@ def get_outliers_from_feature(df, feature_from, feature_to, feature_value, thres
 
 # MANUAL CLEANING PART
 def hand_cleaning(df, join_colum, bad_path="", debug=True):
+    clean_df = df.copy()
     # Remove all empty values
     clean_df = df[(df["P (kW)"] != 0.0) & (df["Ta (C)"] != 0.0) & (df["Tm (C)"] != 0.0) & (df["I15 (W/m2)"] != 0) & (
-            df["I3 (W/m2)"] != 0.0)]
+            df["I3 (W/m2)"] != 0.0) & (df["Time Frame"] <= 22) & (df["Time Frame"] >= 3)]
     # Remove bad row (T15 and T3 without P (kW))
     bad_pow = df[(df["P (kW)"] == 0.0) & (df["Ta (C)"] != 0.0) & (df["Tm (C)"] != 0.0) & (df["I15 (W/m2)"] != 0) & (
             df["I3 (W/m2)"] != 0.0)]
