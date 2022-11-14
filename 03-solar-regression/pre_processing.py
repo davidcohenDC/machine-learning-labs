@@ -136,7 +136,7 @@ def augment_celsius(df, replace=False, columns=None):
         return new_df
 
 
-def get_outliers_from_feature(df, feature_from, feature_to, feature_value, threshold='mid'):
+def get_outliers_from_feature(df, feature_from, feature_to, feature_value, threshold='mid', secure=True):
     assert threshold in ('mid', 'upper'), "Invalid side '{}'".format(threshold)
     lower_bound = 0
     upper_bound = 0
@@ -149,20 +149,27 @@ def get_outliers_from_feature(df, feature_from, feature_to, feature_value, thres
     elif threshold == "upper":
         lower_bound = q1 - 3.0 * iqr
         upper_bound = q3 + 3.0 * iqr
-    if lower_bound != 0 and upper_bound != 0:
+    if lower_bound == 0 or upper_bound == 0 and secure:
+        print(f"prevent feature {feature_from} to remove zeros outliers (change secure to remove)")
+        return pd.DataFrame()
+    else:
         return df[df[feature_from] == feature_value].loc[(df[feature_to] <= lower_bound) |
                                                          (df[feature_to] >= upper_bound)]
-    else:
-        print("failed to remove outliers")
-        return df
 
 
 # MANUAL CLEANING PART
 def hand_cleaning(df, join_colum, bad_path="", debug=True):
     clean_df = df.copy()
     # Remove all empty values
+    zeros = clean_df[(clean_df["P (kW)"] != 0.0) & (clean_df["Ta (C)"] != 0.0) & (clean_df["Tm (C)"] != 0.0) &
+                     (clean_df["I15 (W/m2)"] != 0) & (clean_df["I3 (W/m2)"] != 0.0) &
+                     (clean_df["Time Frame"] >= 21) | (clean_df["Time Frame"] <= 4)]
+
     clean_df = df[(df["P (kW)"] != 0.0) & (df["Ta (C)"] != 0.0) & (df["Tm (C)"] != 0.0) & (df["I15 (W/m2)"] != 0) & (
             df["I3 (W/m2)"] != 0.0) & (df["Time Frame"] <= 22) & (df["Time Frame"] >= 3)]
+
+    clean_df = pd.concat([clean_df, zeros], axis=0, ignore_index=True)
+
     # Remove bad row (T15 and T3 without P (kW))
     bad_pow = df[(df["P (kW)"] == 0.0) & (df["Ta (C)"] != 0.0) & (df["Tm (C)"] != 0.0) & (df["I15 (W/m2)"] != 0) & (
             df["I3 (W/m2)"] != 0.0)]
@@ -239,12 +246,14 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
 
     pure_data = dataframe.copy()
     # Remove outliers
+    n_outliers = 0
     for val in set(dataframe["hour"]):
         outliers = get_outliers_from_feature(df=pure_data, feature_from="hour", feature_to="P (kW)",
-                                             feature_value=val, threshold="mid")
+                                             feature_value=val, threshold="upper")
         if not outliers.empty:
+            n_outliers = n_outliers + outliers.shape[0]
             pure_data = filter_dataframe_rows_by_values(df=pure_data, col="Date", values=outliers["Date"])
-    d_print(debug, "removed outliers ...")
+    d_print(debug, f"removed {n_outliers} outliers ...")
     if debug:
         d_print(debug, "Before outliers cleaning")
         dataframe.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
