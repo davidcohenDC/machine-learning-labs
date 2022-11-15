@@ -1,13 +1,17 @@
+import math
 import os
 import time
-
+import warnings
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.model_selection import GridSearchCV, ShuffleSplit
 from sklearn.ensemble import RandomForestRegressor, VotingRegressor
 from sklearn.linear_model import LinearRegression
+from tqdm import tqdm
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
+debug = True
 
 class SolarData:
     def __init__(self, csv_path):
@@ -139,51 +143,58 @@ def augment_celsius(df, replace=False, columns=None):
         return new_df
 
 
-def get_outliers_from_feature(df, feature_from, feature_to, feature_value, threshold='mid', secure=True):
+def get_outliers_from_feature(df, feature_from, feature_to, threshold='mid', secure=True):
     assert threshold in ('mid', 'upper'), "Invalid side '{}'".format(threshold)
     lower_bound = 0
     upper_bound = 0
-    q1 = df[df[feature_from] == feature_value][feature_to].quantile(0.25)
-    q3 = df[df[feature_from] == feature_value][feature_to].quantile(0.75)
-    iqr = q3 - q1
-    if threshold == 'mid':
-        lower_bound = q1 - 1.5 * iqr
-        upper_bound = q3 + 1.5 * iqr
-    elif threshold == "upper":
-        lower_bound = q1 - 3.0 * iqr
-        upper_bound = q3 + 3.0 * iqr
-    if lower_bound == 0 or upper_bound == 0 and secure:
-        print(f"prevent feature {feature_from} to remove zeros outliers (change secure to remove)")
-        return pd.DataFrame()
-    else:
-        return df[df[feature_from] == feature_value].loc[(df[feature_to] <= lower_bound) |
-                                                         (df[feature_to] >= upper_bound)]
+    data_outliers = pd.DataFrame()
+    pure_data = df.copy()
+    for val in set(df[feature_from]):
+        q1 = df[df[feature_from] == val][feature_to].quantile(0.25)
+        q3 = df[df[feature_from] == val][feature_to].quantile(0.75)
+        iqr = q3 - q1
+        if threshold == 'mid':
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+        elif threshold == "upper":
+            lower_bound = q1 - 3.0 * iqr
+            upper_bound = q3 + 3.0 * iqr
+        if lower_bound == 0 or upper_bound == 0 and secure:
+            print(f"prevent feature {feature_from} to remove zeros outliers (change secure to remove)")
+            outliers = pd.DataFrame()
+        else:
+            outliers = df[df[feature_from] == val].loc[(df[feature_to] <= lower_bound) |
+                                                       (df[feature_to] >= upper_bound)]
+        if not outliers.empty:
+            pure_data = filter_dataframe_rows_by_values(df=pure_data, col=feature_from, values=outliers[feature_from])
+
+        data_outliers = data_outliers.append(outliers, ignore_index=True)
+    d_print(debug, f"{data_outliers.shape[0]} outliers rows removed")
+    return pure_data, data_outliers
 
 
 # MANUAL CLEANING PART
 def hand_cleaning(df, join_colum, bad_path="", debug=True):
     clean_df = df.copy()
-    # Remove all empty values
-    zeros = clean_df[(clean_df["P (kW)"] != 0.0) & (clean_df["Ta (C)"] != 0.0) & (clean_df["Tm (C)"] != 0.0) &
-                     (clean_df["I15 (W/m2)"] != 0) & (clean_df["I3 (W/m2)"] != 0.0) &
-                     (clean_df["Time Frame"] >= 21) | (clean_df["Time Frame"] <= 4)]
-
-    clean_df = df[(df["P (kW)"] != 0.0) & (df["Ta (C)"] != 0.0) & (df["Tm (C)"] != 0.0) & (df["I15 (W/m2)"] != 0) & (
-            df["I3 (W/m2)"] != 0.0) & (df["Time Frame"] <= 22) & (df["Time Frame"] >= 3)]
-
-    clean_df = pd.concat([clean_df, zeros], axis=0, ignore_index=True)
-
+    zeros = clean_df[(clean_df["P (kW)"] == 0.0) & (clean_df["Ta (C)"] == 0.0) & (clean_df["Tm (C)"] == 0.0) &
+                     (clean_df["I15 (W/m2)"] == 0) & (clean_df["I3 (W/m2)"] == 0.0) &
+                     (clean_df["hour"] < 21) & (clean_df["hour"] >= 4)]
+    d_print(debug, f"{zeros.shape[0]} mid zeros rows removed")
     # Remove bad row (T15 and T3 without P (kW))
-    bad_pow = df[(df["P (kW)"] == 0.0) & (df["Ta (C)"] != 0.0) & (df["Tm (C)"] != 0.0) & (df["I15 (W/m2)"] != 0) & (
-            df["I3 (W/m2)"] != 0.0)]
-    row_removed = bad_pow.shape[0]
-    clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, bad_pow[join_colum])
+    inconsistent = clean_df[(df["P (kW)"] == 0.0) & (clean_df["Ta (C)"] != 0.0) & (clean_df["Tm (C)"] != 0.0) & (
+            clean_df["I15 (W/m2)"] != 0) & (
+                                    clean_df["I3 (W/m2)"] != 0.0)]
+    d_print(debug, f"{inconsistent.shape[0]} inconsistent rows removed")
+
+    clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, zeros[join_colum])
+    clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, inconsistent[join_colum])
     # Load hand cleaned data
     if os.path.isfile(bad_path):
         bad_data = pd.read_csv(bad_path)
         clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, bad_data[join_colum])
-        row_removed = row_removed + bad_data.shape[0]
-    d_print(debug, f"{row_removed} total row row removed")
+        d_print(debug, f"{inconsistent.shape[0]} bad_data rows removed")
+    else:
+        bad_data = pd.DataFrame()
 
     drop_df = clean_df[((clean_df["hour"] == 21) & (clean_df["P (kW)"] > 80) |
                         (clean_df["hour"] == 20) & (clean_df["P (kW)"] > 100) |
@@ -196,9 +207,10 @@ def hand_cleaning(df, join_colum, bad_path="", debug=True):
                         (clean_df["hour"] == 3) & (clean_df["P (kW)"] > 80) |
                         (clean_df["hour"] == 4) & (clean_df["I3 (W/m2)"] > 200))]
 
-    # TODO add or remove more (need to check mid hours)
+    d_print(debug, f"{drop_df.shape[0]} drop_table rows removed")
     clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, drop_df[join_colum])
-
+    data_removed = pd.concat([zeros, inconsistent, drop_df, bad_data], axis=0, ignore_index=True)
+    clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, data_removed[join_colum])
     if debug:
         d_print(debug, "Before hand cleaning")
         df.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
@@ -206,19 +218,13 @@ def hand_cleaning(df, join_colum, bad_path="", debug=True):
         d_print(debug, "After hand cleaning")
         clean_df.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
         plt.show()
-    return clean_df
+    return clean_df, data_removed
 
 
-def get_outliers(df, feature):
-    q1 = df[feature].quantile(0.45)
-    q3 = df[feature].quantile(0.75)
-    iqr = q3 - q1
-    lower_bound = q1 - 1.0 * iqr
-    upper_bound = q3 + 1.0 * iqr
-    return df.loc[(df[feature] < lower_bound) | (df[feature] > upper_bound)]
+def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
+    global debug
+    debug = d
 
-
-def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
     if os.path.exists(csv_path) is False:
         raise FileNotFoundError
 
@@ -232,9 +238,9 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
 
     # CLEANING
     d_print(debug, "BEGIN CLEANING ...")
-    dataframe = hand_cleaning(df=dataframe, join_colum="Date", bad_path='./DBs/SolarPark/bad_data.csv', debug=debug)
+    dataframe, data_removed = hand_cleaning(df=dataframe, join_colum="Date", bad_path='./DBs/SolarPark/bad_data.csv',
+                                            debug=debug)
     d_print(debug, "had cleaned!")
-
     # AUGMENTATION
     d_print(debug, "BEGIN AUGMENTATION ...")
     dataframe = augment_celsius(df=dataframe, replace=False, columns=["Ta (C)", "Tm (C)"])
@@ -246,23 +252,78 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
     dataframe = dataframe.replace(2013, 2012)
     d_print(debug, "year fused!")
     d_print(debug, "END AUGMENTATION")
+    pure_data, outliers_removed = get_outliers_from_feature(df=dataframe, feature_from="hour", feature_to="P (kW)",
+                                                            threshold="upper")
 
-    pure_data = dataframe.copy()
-    # Remove outliers
-    n_outliers = 0
-    for val in set(dataframe["hour"]):
-        outliers = get_outliers_from_feature(df=pure_data, feature_from="hour", feature_to="P (kW)",
-                                             feature_value=val, threshold="upper")
-        if not outliers.empty:
-            n_outliers = n_outliers + outliers.shape[0]
-            pure_data = filter_dataframe_rows_by_values(df=pure_data, col="Date", values=outliers["Date"])
-    d_print(debug, f"removed {n_outliers} outliers ...")
     if debug:
         d_print(debug, "Before outliers cleaning")
         dataframe.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
         plt.show()
         d_print(debug, "After outliers cleaning")
         pure_data.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
+        plt.show()
+    if extension:
+        extended_frame = dataframe.copy()
+        # EXTENTION
+        d_print(debug, "BEGIN EXTENSION ...")
+        print(f"{data_removed.shape[0]} data_remove ROWS!")
+        augmented_data = pd.DataFrame()
+        progress_bar = tqdm(range(data_removed.shape[0]+pd.concat([data_removed, outliers_removed], axis=0,
+                                                                  ignore_index=True).shape[0]))
+
+        # EXTEND STANDARD DATAFRAME
+        for idx, removed in data_removed.iterrows():
+            for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)"]:
+                q1 = extended_frame[extended_frame['hour'] == removed['Time Frame']][col].quantile(0.25)
+                q3 = extended_frame[extended_frame['hour'] == removed['Time Frame']][col].quantile(0.75)
+                iqr = q3 - q1
+                lower_bound = q1 - 1.5 * iqr
+                upper_bound = q3 + 1.5 * iqr
+                if math.isnan(lower_bound) | math.isnan(lower_bound):
+                    new_val = 0
+                else:
+                    new_val = round(np.random.uniform(0, upper_bound, size=10).mean(), 2)
+                removed[col] = new_val
+                augmented_data = augmented_data.append(removed, ignore_index=True)
+            if debug:
+                progress_bar.update(1)
+        d_print(debug, f"{augmented_data.shape[0]} rows extended to dataframe!")
+        extended_frame = pd.concat([extended_frame, augmented_data], axis=0, ignore_index=True)
+
+        # EXTEND PURE DATAFRAME
+        data_removed = pd.concat([data_removed, outliers_removed], axis=0, ignore_index=True)
+        pure_extended = pure_data.copy()
+        for idx, removed in data_removed.iterrows():
+            for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)"]:
+                q1 = pure_extended[pure_extended['hour'] == removed['Time Frame']][col].quantile(0.25)
+                q3 = pure_extended[pure_extended['hour'] == removed['Time Frame']][col].quantile(0.75)
+                iqr = q3 - q1
+                lower_bound = q1 - 1.5 * iqr
+                upper_bound = q3 + 1.5 * iqr
+                if math.isnan(lower_bound) | math.isnan(lower_bound):
+                    new_val = 0
+                else:
+                    new_val = round(np.random.uniform(0, upper_bound, size=10).mean(), 2)
+                removed[col] = new_val
+                augmented_data = augmented_data.append(removed, ignore_index=True)
+            if debug:
+                progress_bar.update(1)
+        d_print(debug, f"{augmented_data.shape[0]} rows extended to dataframe!")
+        pure_extended = pd.concat([pure_extended, augmented_data], axis=0, ignore_index=True)
+
+        d_print(debug, "END EXTENSION")
+    if debug:
+        d_print(debug, "NORMAL - Before extensions")
+        dataframe.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
+        plt.show()
+        d_print(debug, "NORMAL - After extensions")
+        extended_frame.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
+        plt.show()
+        d_print(debug, "PURE - Before extensions")
+        pure_data.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
+        plt.show()
+        d_print(debug, "PURE - After extensions")
+        pure_extended.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
         plt.show()
     d_print(debug, "END CLEANING")
 
@@ -274,7 +335,10 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, debug=True):
         print(f"Rounded data by {rounding}!")
     # TODO add standard o min_max_scaler
     d_print(debug, "END NORMALIZATION ...")
-    return dataframe, pure_data
+    if extension:
+        return extended_frame, pure_extended
+    else:
+        return dataframe, pure_data
 
 
 class BestParams:
@@ -313,7 +377,7 @@ class BestParams:
         return newRegressor.best_score_ < self._regressor.best_score_
 
 
-def getOptimalRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3,4,5]):
+def getOptimalRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3, 4, 5]):
     bestparams = BestParams("Simple regressor")
 
     result = None
@@ -328,16 +392,15 @@ def getOptimalRegressor(model_params, train_x, train_y, test_size=[0.2], n_split
                                     verbose=2,
                                     return_train_score=False)
 
-
                 grid.fit(train_x, train_y)
 
                 if bestparams.isbetter(grid):
-                    bestparams.update(grid,data_test_size,split)
-    
+                    bestparams.update(grid, data_test_size, split)
+
     return bestparams
 
 
-def getVotingRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3,4,5]):
+def getVotingRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3, 4, 5]):
     bestparams = BestParams("Voting Regressor")
 
     votingRegressorModel = VotingRegressor([
@@ -352,7 +415,6 @@ def getVotingRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=
     for param, value in model_params['LinearRegressor']['params'].items():
         params['lr__' + param] = value
 
-
     for data_test_size in test_size:
         for split in n_split:
             cross_val = ShuffleSplit(n_splits=split, test_size=data_test_size, random_state=42)
@@ -363,16 +425,15 @@ def getVotingRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=
                                 verbose=2,
                                 return_train_score=False)
 
-
             grid.fit(train_x, train_y)
 
         if bestparams.isbetter(grid):
-            bestparams.update(grid,data_test_size,split)
-    
+            bestparams.update(grid, data_test_size, split)
+
     return bestparams
 
-def getBestRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3,4,5], useVotingRegressor=False):
 
+def getBestRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3, 4, 5], useVotingRegressor=False):
     # Use GridSearchCV with RandomForest and LinearRegressor
     # Output -> il migliore regressore fra questi due
     regressor = getOptimalRegressor(model_params, train_x, train_y, test_size, n_split)
@@ -391,4 +452,3 @@ def getBestRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3
         return regressor
     else:
         return votingRegressor
- 
