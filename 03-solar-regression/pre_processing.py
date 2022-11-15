@@ -397,7 +397,8 @@ def getOptimalRegressor(model_params, train_x, train_y, test_size=[0.2], n_split
                                     param_grid=mp['params'],
                                     cv=cross_val,
                                     verbose=2,
-                                    return_train_score=False)
+                                    return_train_score=False,
+                                    scoring='neg_mean_squared_error')
 
                 grid.fit(train_x, train_y)
 
@@ -430,7 +431,9 @@ def getVotingRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=
                                 param_grid=params,
                                 cv=cross_val,
                                 verbose=2,
-                                return_train_score=False)
+                                n_jobs=-1,
+                                return_train_score=False,
+                                scoring='neg_mean_squared_error')
 
             grid.fit(train_x, train_y)
 
