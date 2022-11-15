@@ -196,20 +196,20 @@ def hand_cleaning(df, join_colum, bad_path="", debug=True):
     else:
         bad_data = pd.DataFrame()
 
-    drop_df = clean_df[((clean_df["hour"] == 21) & (clean_df["P (kW)"] > 80) |
-                        (clean_df["hour"] == 20) & (clean_df["P (kW)"] > 100) |
-                        (clean_df["hour"] == 19) & (clean_df["P (kW)"] > 220) |
+    drop_df = clean_df[((clean_df["hour"] == 21) & (clean_df["P (kW)"] > 150) |
+                        (clean_df["hour"] == 20) & (clean_df["P (kW)"] > 300) |
+                        (clean_df["hour"] == 19) & (clean_df["P (kW)"] > 400) |
                         (clean_df["hour"] == 18) & (clean_df["P (kW)"] > 400) |
                         (clean_df["hour"] == 17) & (clean_df["P (kW)"] > 400) |
-                        (clean_df["hour"] == 6) & (clean_df["P (kW)"] > 700) |
-                        (clean_df["hour"] == 5) & (clean_df["P (kW)"] > 500) |
-                        (clean_df["hour"] == 4) & (clean_df["P (kW)"] > 100) |
-                        (clean_df["hour"] == 3) & (clean_df["P (kW)"] > 80) |
-                        (clean_df["hour"] == 4) & (clean_df["I3 (W/m2)"] > 200))]
+                        # (clean_df["hour"] == 6) & (clean_df["P (kW)"] > 800) |
+                        # (clean_df["hour"] == 5) & (clean_df["P (kW)"] > 600) |
+                        # (clean_df["hour"] == 4) & (clean_df["P (kW)"] > 700) |
+                        (clean_df["hour"] == 3) & (clean_df["P (kW)"] > 150))]
+                        # (clean_df["hour"] == 4) & (clean_df["I3 (W/m2)"] > 600))
 
     d_print(debug, f"{drop_df.shape[0]} drop_table rows removed")
     clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, drop_df[join_colum])
-    data_removed = pd.concat([zeros, inconsistent, drop_df, bad_data], axis=0, ignore_index=True)
+    data_removed = pd.concat([zeros, inconsistent, bad_data], axis=0, ignore_index=True)
     clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, data_removed[join_colum])
     if debug:
         d_print(debug, "Before hand cleaning")
@@ -236,11 +236,6 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
     d_print(debug, "datatime extracted!")
     d_print(debug, "END FEATURE ENGINEERING")
 
-    # CLEANING
-    d_print(debug, "BEGIN CLEANING ...")
-    dataframe, data_removed = hand_cleaning(df=dataframe, join_colum="Date", bad_path='./DBs/SolarPark/bad_data.csv',
-                                            debug=debug)
-    d_print(debug, "had cleaned!")
     # AUGMENTATION
     d_print(debug, "BEGIN AUGMENTATION ...")
     dataframe = augment_celsius(df=dataframe, replace=False, columns=["Ta (C)", "Tm (C)"])
@@ -249,12 +244,20 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
                                                                              "hour", "minute", "day_of_year",
                                                                              "day_of_week"])
     d_print(debug, "cycles augmented!")
+    # CLEANING
+    d_print(debug, "BEGIN CLEANING ...")
+    dataframe, data_removed = hand_cleaning(df=dataframe, join_colum="Date", bad_path='./DBs/SolarPark/bad_data2.csv',
+                                            debug=debug)
+    d_print(debug, "hand cleaned!")
     dataframe = dataframe.replace(2013, 2012)
     d_print(debug, "year fused!")
     d_print(debug, "END AUGMENTATION")
-    pure_data, outliers_removed = get_outliers_from_feature(df=dataframe, feature_from="hour", feature_to="P (kW)",
-                                                            threshold="upper")
 
+    outliers = pd.DataFrame()
+    for feature in ["hour__sin", "hour__cos", "Time Frame__sin", "Time Frame__cos", "day__sin", "day__cos"]:
+        pure_data, outliers_removed = get_outliers_from_feature(df=dataframe, feature_from=feature,
+                                                                feature_to="P (kW)", threshold="upper")
+        outliers = pd.concat([outliers, outliers_removed], axis=0, ignore_index=True)
     if debug:
         d_print(debug, "Before outliers cleaning")
         dataframe.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
@@ -264,21 +267,23 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
         plt.show()
     if extension:
         extended_frame = dataframe.copy()
+
         # EXTENTION
         d_print(debug, "BEGIN EXTENSION ...")
         print(f"{data_removed.shape[0]} data_remove ROWS!")
         augmented_data = pd.DataFrame()
-        progress_bar = tqdm(range(data_removed.shape[0]+pd.concat([data_removed, outliers_removed], axis=0,
+        progress_bar = tqdm(range(data_removed.shape[0]+pd.concat([data_removed, outliers], axis=0,
                                                                   ignore_index=True).shape[0]))
 
-        # EXTEND STANDARD DATAFRAME
+
+        # standard frame
         for idx, removed in data_removed.iterrows():
             for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)"]:
-                q1 = extended_frame[extended_frame['hour'] == removed['Time Frame']][col].quantile(0.25)
-                q3 = extended_frame[extended_frame['hour'] == removed['Time Frame']][col].quantile(0.75)
+                q1 = extended_frame[extended_frame['Time Frame__sin'] == removed['Time Frame__sin']][col].quantile(0.25)
+                q3 = extended_frame[extended_frame['Time Frame__sin'] == removed['Time Frame__sin']][col].quantile(0.75)
                 iqr = q3 - q1
-                lower_bound = q1 - 1.5 * iqr
-                upper_bound = q3 + 1.5 * iqr
+                lower_bound = q1 - 1.0 * iqr
+                upper_bound = q3 + 1.0 * iqr
                 if math.isnan(lower_bound) | math.isnan(lower_bound):
                     new_val = 0
                 else:
@@ -290,16 +295,18 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
         d_print(debug, f"{augmented_data.shape[0]} rows extended to dataframe!")
         extended_frame = pd.concat([extended_frame, augmented_data], axis=0, ignore_index=True)
 
-        # EXTEND PURE DATAFRAME
-        data_removed = pd.concat([data_removed, outliers_removed], axis=0, ignore_index=True)
+        # pure dataframe
+        data_removed = pd.concat([data_removed, outliers_removed, outliers], axis=0, ignore_index=True)
         pure_extended = pure_data.copy()
+
+
         for idx, removed in data_removed.iterrows():
             for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)"]:
-                q1 = pure_extended[pure_extended['hour'] == removed['Time Frame']][col].quantile(0.25)
-                q3 = pure_extended[pure_extended['hour'] == removed['Time Frame']][col].quantile(0.75)
+                q1 = pure_extended[pure_extended['I15 (W/m2)'] == removed['I15 (W/m2)']][col].quantile(0.25)
+                q3 = pure_extended[pure_extended['I15 (W/m2)'] == removed['I15 (W/m2)']][col].quantile(0.75)
                 iqr = q3 - q1
-                lower_bound = q1 - 1.5 * iqr
-                upper_bound = q3 + 1.5 * iqr
+                lower_bound = q1 - 1.0 * iqr
+                upper_bound = q3 + 1.0 * iqr
                 if math.isnan(lower_bound) | math.isnan(lower_bound):
                     new_val = 0
                 else:
@@ -312,7 +319,7 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
         pure_extended = pd.concat([pure_extended, augmented_data], axis=0, ignore_index=True)
 
         d_print(debug, "END EXTENSION")
-    if debug:
+    if debug & extension:
         d_print(debug, "NORMAL - Before extensions")
         dataframe.boxplot(column='P (kW)', by='Time Frame', figsize=(5, 5))
         plt.show()
