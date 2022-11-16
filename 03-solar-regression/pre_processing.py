@@ -5,9 +5,11 @@ import warnings
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import GridSearchCV, ShuffleSplit
 from sklearn.ensemble import RandomForestRegressor, VotingRegressor
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler, RobustScaler, OneHotEncoder
 from tqdm import tqdm
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -157,8 +159,8 @@ def get_outliers_from_feature(df, feature_from, feature_to, threshold='mid', sec
             lower_bound = q1 - 1.5 * iqr
             upper_bound = q3 + 1.5 * iqr
         elif threshold == "upper":
-            lower_bound = q1 - 3.0 * iqr
-            upper_bound = q3 + 3.0 * iqr
+            lower_bound = q1 - 4.0 * iqr
+            upper_bound = q3 + 4.0 * iqr
         if lower_bound == 0 or upper_bound == 0 and secure:
             print(f"prevent feature {feature_from} to remove zeros outliers (change secure to remove)")
             outliers = pd.DataFrame()
@@ -201,6 +203,10 @@ def hand_cleaning(df, join_colum, bad_path="", debug=True):
                         (clean_df["hour"] == 19) & (clean_df["P (kW)"] > 400) |
                         (clean_df["hour"] == 18) & (clean_df["P (kW)"] > 400) |
                         (clean_df["hour"] == 17) & (clean_df["P (kW)"] > 400) |
+                        (clean_df["Time Frame"] == 2) & (clean_df["P (kW)"] > 5) |
+                        (clean_df["Time Frame"] == 1) & (clean_df["P (kW)"] > 5) |
+                        (clean_df["Time Frame"] == 22) & (clean_df["P (kW)"] > 5) |
+                        (clean_df["Time Frame"] == 23) & (clean_df["P (kW)"] > 5) |
                         # (clean_df["hour"] == 6) & (clean_df["P (kW)"] > 800) |
                         # (clean_df["hour"] == 5) & (clean_df["P (kW)"] > 600) |
                         # (clean_df["hour"] == 4) & (clean_df["P (kW)"] > 700) |
@@ -209,7 +215,7 @@ def hand_cleaning(df, join_colum, bad_path="", debug=True):
 
     d_print(debug, f"{drop_df.shape[0]} drop_table rows removed")
     clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, drop_df[join_colum])
-    data_removed = pd.concat([zeros, inconsistent, bad_data], axis=0, ignore_index=True)
+    data_removed = pd.concat([zeros, inconsistent,bad_data], axis=0, ignore_index=True)
     clean_df = filter_dataframe_rows_by_values(clean_df, join_colum, data_removed[join_colum])
     if debug:
         d_print(debug, "Before hand cleaning")
@@ -278,7 +284,7 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
 
         # standard frame
         for idx, removed in data_removed.iterrows():
-            for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)"]:
+            for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)","day","hour"]:
                 q1 = extended_frame[extended_frame['Time Frame__sin'] == removed['Time Frame__sin']][col].quantile(0.25)
                 q3 = extended_frame[extended_frame['Time Frame__sin'] == removed['Time Frame__sin']][col].quantile(0.75)
                 iqr = q3 - q1
@@ -301,7 +307,7 @@ def pre_process(csv_path="./DBs/train.txt", rounding=0, d=True, extension=True):
 
 
         for idx, removed in data_removed.iterrows():
-            for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)"]:
+            for col in ["P (kW)", "I3 (W/m2)", "I15 (W/m2)","day","hour"]:
                 q1 = pure_extended[pure_extended['I15 (W/m2)'] == removed['I15 (W/m2)']][col].quantile(0.25)
                 q3 = pure_extended[pure_extended['I15 (W/m2)'] == removed['I15 (W/m2)']][col].quantile(0.75)
                 iqr = q3 - q1
@@ -369,7 +375,7 @@ class BestParams:
     def isbetter(self, score):
         if self._regressor is None: return True
         # print(score.cv_results_['mean_test_score'], self._bestparams['cv_results_'])
-        return score.cv_results_['mean_test_score'] > self._regressor.cv_results_['mean_test_score']
+        return score.cv_results_['mean_test_score'] < self._regressor.cv_results_['mean_test_score']
 
     def printVals(self):
         print("Regressor type: ", self.type)
@@ -462,3 +468,65 @@ def getBestRegressor(model_params, train_x, train_y, test_size=[0.2], n_split=[3
         return regressor
     else:
         return votingRegressor
+
+
+
+def cast_feature(df, remove_label=False):
+    if remove_label:
+        numerical_cols = ["Time Frame", "Ta (C)", "Tm (C)", "I3 (W/m2)", "I15 (W/m2)", "Ta (F)"]
+    else:
+        numerical_cols = ["Time Frame", "Ta (C)", "Tm (C)", "I3 (W/m2)", "I15 (W/m2)", "P (kW)", "Ta (F)"]
+    categorical_cols = ["year", "month", "day", "hour", "day_of_week", "day_of_year", "day_part"]
+    boolean_cols = ["is_year_start", "is_quarter_start", "is_month_start", "is_month_end", "is_weekend"]
+    date_cols = ["Date"]
+
+    for f in categorical_cols, boolean_cols:
+        df[f] = df[f].astype('category')
+    for n in numerical_cols:
+        df[n] = df[n].astype(np.float64)
+
+    return df
+
+
+def find_best_normalized_data(model_params, data_x, data_y):
+    global normalized_x, normalized_y
+    scalers = [
+        StandardScaler(),
+        RobustScaler(),
+        # MinMaxScaler(),
+        # MaxAbsScaler(),
+        # Normalizer(norm='l1')
+    ]
+
+    best_classifier = None
+    best_transformer = None
+    # best_transformer_y = None
+    for scaler in scalers:
+        transformer_x = ColumnTransformer([
+            ("scaler", scaler, [0, 1, 2, 3, 4]),
+            ("ohe", OneHotEncoder(handle_unknown='ignore'), [5, 6, 7, 8])
+        ])
+        transformer_y = ColumnTransformer([("scaler", scaler, [0])])
+        normalized_x = transformer_x.fit_transform(data_x)
+        normalized_y = transformer_y.fit_transform(data_y.reshape(-1, 1))
+        normalized_y = normalized_y.reshape(-1)
+
+        candidate_result = getBestRegressor(model_params, normalized_x, normalized_y)
+
+        if best_classifier is None:
+            best_classifier = candidate_result
+        if best_transformer is None:
+            best_transformer = transformer_x
+        # if best_transformer_y is None:
+            # best_transformer_y = transformer_y
+        if candidate_result.isBetterRegressor(best_classifier._regressor):
+            print("Using scaler: ", transformer_x)
+            print("New best score: ")
+            candidate_result.printVals()
+            print("Old score: ")
+            best_classifier.printVals()
+            best_classifier = candidate_result
+            best_transformer = transformer_x
+            # best_transformer_y = transformer_y
+    return best_classifier, best_transformer, normalized_x, normalized_y
+
