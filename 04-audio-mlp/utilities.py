@@ -34,14 +34,14 @@ def load_dataset():
     # Conversione dei dati (test)
     test_x = test_x.astype(np.float64)
     # Aggiunta di feature
-    feature_x = add_feature(train_x)
+    # feature_x = add_feature(train_x)
     # feature_y = add_feature(train_y)
-    feature_test_x = add_feature(test_x)
+    # feature_test_x = add_feature(test_x)
 
     """print("feature_x"+str(feature_x.shape))
     print("feature_y"+str(train_y.shape))
     print("feature_test_x"+str(feature_test_x.shape))"""
-    return feature_x, train_y, feature_test_x
+    return train_x, train_y, test_x
 
 
 def normalize_data(train_x, test_x):
