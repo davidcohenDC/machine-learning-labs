@@ -1,0 +1,29 @@
+{
+  "branches": [
+    "main"
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "git archive --format=zip --prefix=machine-learning-labs-${nextRelease.version}/ -o machine-learning-labs-${nextRelease.version}.zip HEAD"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "machine-learning-labs-*.zip",
+            "label": "Notebooks, data, helper modules and Docker setup"
+          }
+        ],
+        "successComment": false,
+        "failComment": false,
+        "failTitle": false
+      }
+    ]
+  ]
+}

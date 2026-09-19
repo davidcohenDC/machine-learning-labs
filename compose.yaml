@@ -1,0 +1,14 @@
+# JupyterLab on http://localhost:8888 with the labs mounted from the checkout.
+#
+#   docker compose up                      then open the link
+#   docker compose run --rm lab scripts/run.sh 01-svm-knn/svm-knn.ipynb
+services:
+  lab:
+    image: ghcr.io/davidcohendc/machine-learning-labs:latest
+    build: .
+    pull_policy: missing
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/work
+    working_dir: /work

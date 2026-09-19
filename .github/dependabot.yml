@@ -1,0 +1,10 @@
+# Keeps only the CI itself from rotting: the notebooks are frozen on purpose.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
